@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# (C) Copyright 2014
+# Christophe Vu-Brugier <cvubrugier@yahoo.fr>
+#
+# SPDX-License-Identifier:  GPL-2.0+
+#
+
+print_usage() {
+    cat <<EOF
+Usage: $(basename $0) DEVICE
+Export a block device as an iSCSI target
+EOF
+}
+
+die() {
+    echo $1
+    exit 1
+}
+
+if [ $1 = '-h' -o $1 = '--help' ]; then
+    print_usage
+    exit 0
+fi
+
+DEVICE=$1
+IQN="iqn.2003-01.org.linux-iscsi.$(hostname):$(basename $DEVICE)"
+
+CONFIGFS=/sys/kernel/config
+CORE_DIR=$CONFIGFS/target/core
+ISCSI_DIR=$CONFIGFS/target/iscsi
+
+[ -b $DEVICE ] || die "${DEVICE} does not exist or is not a block device"
+
+# Load the target modules and mount the config file system
+lsmod | grep -q configfs || modprobe configfs
+lsmod | grep -q target_core_mod || modprobe target_core_mod
+mount | grep -q ^configfs || mount -t configfs none $CONFIGFS
+mkdir -p $ISCSI_DIR
+
+# Create a block I/O backstore
+mkdir -p $CORE_DIR/iblock_0/data
+echo "udev_path=${DEVICE}" > $CORE_DIR/iblock_0/data/control
+echo 1 > $CORE_DIR/iblock_0/data/enable
+
+# Create an iSCSI target and a target portal group (TPG)
+mkdir $ISCSI_DIR/$IQN
+mkdir $ISCSI_DIR/$IQN/tpgt_1/
+
+# Create a LUN
+mkdir $ISCSI_DIR/$IQN/tpgt_1/lun/lun_0
+ln -s $CORE_DIR/iblock_0/data/ $ISCSI_DIR/$IQN/tpgt_1/lun/lun_0/data
+echo 1 > $ISCSI_DIR/$IQN/tpgt_1/enable
+
+# Create a network portal
+mkdir $ISCSI_DIR/$IQN/tpgt_1/np/0.0.0.0:3260
+
+# Disable authentication
+echo 0 > $ISCSI_DIR/$IQN/tpgt_1/attrib/authentication
+echo 1 > $ISCSI_DIR/$IQN/tpgt_1/attrib/generate_node_acls
+
+# Allow write access for non authenticated initiators
+echo 0 > $ISCSI_DIR/$IQN/tpgt_1/attrib/demo_mode_write_protect
+
+echo "Target ${IQN} has been created"
