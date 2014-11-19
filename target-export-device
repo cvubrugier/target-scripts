@@ -19,13 +19,19 @@ die() {
 }
 
 create_iblock() {
-    BACKSTORE_DIR=$CORE_DIR/iblock_0/data
+    local i=0
+    while [ -d $CORE_DIR/iblock_$i ]; do i=$((i + 1)); done
+    BACKSTORE_DIR=$CORE_DIR/iblock_$i/data
+
     mkdir -p $BACKSTORE_DIR
     echo "udev_path=${DEVICE}" > $BACKSTORE_DIR/control
 }
 
 create_fileio() {
-    BACKSTORE_DIR=$CORE_DIR/fileio_0/data
+    local i=0
+    while [ -d $CORE_DIR/fileio_$i ]; do i=$((i + 1)); done
+    BACKSTORE_DIR=$CORE_DIR/fileio_$i/data
+
     DEVICE_SIZE=$(($(du $DEVICE | cut -f1) * 1024))
     mkdir -p $BACKSTORE_DIR
     echo "fd_dev_name=${DEVICE}" > $BACKSTORE_DIR/control
