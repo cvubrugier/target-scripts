@@ -8,7 +8,7 @@
 
 print_usage() {
     cat <<EOF
-Usage: $(basename $0) DEVICE|FILE
+Usage: $(basename $0) DEVICE|FILE [-p portal]
 Export a block device as an iSCSI target
 EOF
 }
@@ -45,7 +45,7 @@ case "$1" in
     *)  DEVICE=$1; shift;;
 esac
 
-while getopts "h-:" optargs; do
+while getopts "h-:p:" optargs; do
     case "${optargs}" in
         -)
             case "${OPTARG}" in
@@ -53,12 +53,14 @@ while getopts "h-:" optargs; do
             esac
 	;;
         h) print_usage; exit 0;;
+        p) PORTAL=${OPTARG}; shift;;
     esac
     shift
 done
 
 [ -n "$DEVICE" ] || DEVICE=$1
 IQN="iqn.2003-01.org.linux-iscsi.$(hostname):$(basename $DEVICE)"
+[ -n "$PORTAL" ] || PORTAL="0.0.0.0:3260"
 
 CONFIGFS=/sys/kernel/config
 CORE_DIR=$CONFIGFS/target/core
@@ -90,7 +92,7 @@ ln -s $BACKSTORE_DIR $ISCSI_DIR/$IQN/tpgt_1/lun/lun_0/data
 echo 1 > $ISCSI_DIR/$IQN/tpgt_1/enable
 
 # Create a network portal
-mkdir $ISCSI_DIR/$IQN/tpgt_1/np/0.0.0.0:3260
+mkdir $ISCSI_DIR/$IQN/tpgt_1/np/$PORTAL
 
 # Disable authentication
 echo 0 > $ISCSI_DIR/$IQN/tpgt_1/attrib/authentication
@@ -99,4 +101,4 @@ echo 1 > $ISCSI_DIR/$IQN/tpgt_1/attrib/generate_node_acls
 # Allow write access for non authenticated initiators
 echo 0 > $ISCSI_DIR/$IQN/tpgt_1/attrib/demo_mode_write_protect
 
-echo "Target ${IQN} has been created"
+echo "Target ${IQN}, portal ${PORTAL} has been created"
