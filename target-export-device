@@ -39,12 +39,25 @@ create_fileio() {
     echo 1 > $BACKSTORE_DIR/attrib/emulate_write_cache
 }
 
-if [ $1 = '-h' -o $1 = '--help' ]; then
-    print_usage
-    exit 0
-fi
+case "$1" in
+    -*) break;;
+    "") print_usage; exit 0;;
+    *)  DEVICE=$1; shift;;
+esac
 
-DEVICE=$1
+while getopts "h-:" optargs; do
+    case "${optargs}" in
+        -)
+            case "${OPTARG}" in
+                help) print_usage; exit 0;;
+            esac
+	;;
+        h) print_usage; exit 0;;
+    esac
+    shift
+done
+
+[ -n "$DEVICE" ] || DEVICE=$1
 IQN="iqn.2003-01.org.linux-iscsi.$(hostname):$(basename $DEVICE)"
 
 CONFIGFS=/sys/kernel/config
