@@ -8,8 +8,8 @@
 
 print_usage() {
     cat <<EOF
-Usage: $(basename $0) DEVICE|FILE [-p portal]
-Export a block device as an iSCSI target
+Usage: $(basename $0) [-p PORTAL] DEVICE|FILE
+Export a block device or a regular file as an iSCSI target
 EOF
 }
 
@@ -39,26 +39,19 @@ create_fileio() {
     echo 1 > $BACKSTORE_DIR/attrib/emulate_write_cache
 }
 
-case "$1" in
-    -*) break;;
-    "") print_usage; exit 0;;
-    *)  DEVICE=$1; shift;;
-esac
-
-while getopts "h-:p:" optargs; do
-    case "${optargs}" in
-        -)
-            case "${OPTARG}" in
-                help) print_usage; exit 0;;
-            esac
-	;;
+while getopts "hp:" arg; do
+    case $arg in
         h) print_usage; exit 0;;
-        p) PORTAL=${OPTARG}; shift;;
+        p) PORTAL=${OPTARG};;
     esac
-    shift
 done
+shift $(($OPTIND - 1))
 
-[ -n "$DEVICE" ] || DEVICE=$1
+DEVICE=$1
+if [ -z "$DEVICE" ]; then
+    print_usage
+    exit 1
+fi
 IQN="iqn.2003-01.org.linux-iscsi.$(hostname):$(basename $DEVICE)"
 [ -n "$PORTAL" ] || PORTAL="0.0.0.0:3260"
 
