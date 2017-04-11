@@ -48,18 +48,14 @@ done
 shift $(($OPTIND - 1))
 
 DEVICE=$1
-if [ -z "$DEVICE" ]; then
-    print_usage
-    exit 1
-fi
+[ -n "$DEVICE" ] || die "Missing device or file argument"
+[ -b $DEVICE -o -f $DEVICE ] || die "Invalid device or file: ${DEVICE}"
 IQN="iqn.2003-01.org.linux-iscsi.$(hostname):$(basename $DEVICE)"
 [ -n "$PORTAL" ] || PORTAL="0.0.0.0:3260"
 
 CONFIGFS=/sys/kernel/config
 CORE_DIR=$CONFIGFS/target/core
 ISCSI_DIR=$CONFIGFS/target/iscsi
-
-[ -b $DEVICE -o -f $DEVICE ] || die "${DEVICE} does not exist"
 
 # Load the target modules and mount the config file system
 lsmod | grep -q configfs || modprobe configfs
