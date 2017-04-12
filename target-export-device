@@ -9,7 +9,7 @@
 print_usage() {
     cat <<EOF
 Usage: $(basename $0) [-p PORTAL] DEVICE|FILE
-Export a block device or a regular file as an iSCSI target
+Export a block device or a file as an iSCSI target with a single LUN
 EOF
 }
 
@@ -19,18 +19,14 @@ die() {
 }
 
 create_iblock() {
-    local i=0
-    while [ -d $CORE_DIR/iblock_$i ]; do i=$((i + 1)); done
-    BACKSTORE_DIR=$CORE_DIR/iblock_$i/data
+    BACKSTORE_DIR=$CORE_DIR/iblock_0/data
 
     mkdir -p $BACKSTORE_DIR
     echo "udev_path=${DEVICE}" > $BACKSTORE_DIR/control
 }
 
 create_fileio() {
-    local i=0
-    while [ -d $CORE_DIR/fileio_$i ]; do i=$((i + 1)); done
-    BACKSTORE_DIR=$CORE_DIR/fileio_$i/data
+    BACKSTORE_DIR=$CORE_DIR/fileio_0/data
 
     DEVICE_SIZE=$(($(du $DEVICE | cut -f1) * 1024))
     mkdir -p $BACKSTORE_DIR
