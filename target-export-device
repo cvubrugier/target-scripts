@@ -28,7 +28,7 @@ create_iblock() {
 create_fileio() {
     BACKSTORE_DIR=$CORE_DIR/fileio_0/data
 
-    DEVICE_SIZE=$(($(du $DEVICE | cut -f1) * 1024))
+    DEVICE_SIZE=$(du -b $DEVICE | cut -f1)
     mkdir -p $BACKSTORE_DIR
     echo "fd_dev_name=${DEVICE}" > $BACKSTORE_DIR/control
     echo "fd_dev_size=${DEVICE_SIZE}" > $BACKSTORE_DIR/control
