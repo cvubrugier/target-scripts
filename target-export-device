@@ -1,5 +1,9 @@
 #!/bin/sh
 #
+# This script illustrates the sequence of operations in configfs to
+# create a very simple LIO iSCSI target with a file or block device
+# backstore.
+#
 # (C) Copyright 2014
 # Christophe Vu-Brugier <cvubrugier@fastmail.fm>
 #
